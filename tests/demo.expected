@@ -1,0 +1,33 @@
+LUNA|Luna|negro
+MILO|Milo|atigrado naranja
+NUBE|Nube|blanco
+PIPA|Pipa|gris
+NUBE
+LUNA|Apoyo A|caregiver
+LUNA|Casa Norte|owner
+MILO|Casa Norte|owner
+NUBE|Casa Sur|owner
+PIPA|<NULL>|<NULL>
+2030-03-01|4100
+2030-04-01|4200
+2030-05-01|4150
+2030-05-10|Húmedo A|85
+2030-05-10|Seco B|30
+LUNA|35000
+MILO|26000
+NUBE|9000
+PIPA|0
+LUNA|2030-06-03
+MILO|2030-06-08
+LUNA|2030-05-03|Registro preventivo
+MILO|2030-05-08|Consulta de seguimiento
+NUBE|2030-05-09|Primera consulta
+PIPA|<NULL>|<NULL>
+LUNA|2030-05-03|vacuna|Vacuna ficticia A
+MILO|2030-05-08|tratamiento|Medicamento ficticio A
+LUNA|2030-03-01|4100|<NULL>
+LUNA|2030-04-01|4200|100
+LUNA|2030-05-01|4150|-50
+MILO|2030-04-01|5200|<NULL>
+MILO|2030-05-01|5150|-50
+NUBE|2030-05-01|3600|<NULL>

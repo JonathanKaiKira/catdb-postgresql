@@ -1,13 +1,15 @@
-# Requisitos de negocio
+# Requisitos de CatDB
 
-| ID | Requisito | Implementación |
-| --- | --- | --- |
-| RF-01 | Identificar clientes por correo y productos por SKU. Clasificar cada producto en una categoría. | `customers`, `products`, `categories` |
-| RF-02 | Asociar un producto con varios proveedores y gestionar varios productos por proveedor. | `suppliers`, `product_suppliers` |
-| RF-03 | Habilitar posiciones por bodega y producto. Registrar entradas, salidas y ajustes en cada posición habilitada. | `warehouses`, `inventory_positions`, `stock_movements` |
-| RF-04 | Consultar existencias por posición, incluidas las posiciones sin movimientos. | `inventory_balances` |
-| RF-05 | Registrar pedidos por cliente y líneas numeradas con cantidad positiva y precio acordado. | `sales_orders`, `order_items` |
-| RF-06 | Registrar uno o varios pagos por pedido con referencia única e importe positivo. | `payments` |
-| RF-07 | Calcular total, pagos y saldo por cobrar. Identificar existencias negativas y sobrepagos. | `order_balances`, `sql/03_validate.sql` |
+| Necesidad | Regla implementada |
+| --- | --- |
+| Identificar gatos | Código único, nombre y pelaje obligatorios, nacimiento opcional |
+| Compartir responsabilidades | Vínculo gato–persona con un rol por pareja y alias ficticios |
+| Registrar alimentación | Cada consumo referencia un gato y un alimento. Los gramos son positivos |
+| Comparar peso | Una medición positiva por gato y fecha |
+| Registrar consultas | Visita por gato, motivo y seguimiento opcional posterior |
+| Registrar vacunas | Una aplicación de cada tipo por visita. El gato se obtiene de la visita |
+| Registrar tratamientos | Medicamento y visita obligatorios. Fin opcional igual o posterior al inicio |
+| Registrar gastos | Un gasto positivo en CLP, clasificado y asignado a un gato |
+| Registrar actividades | Fecha y hora, tipo y observación no vacía |
 
-La moneda es CLP para todo el conjunto. El pedido puede existir vacío durante su preparación. Cada movimiento representa un evento de inventario y se registra independientemente de los pedidos. La conciliación muestra diferencias para revisión. La reserva de stock, la trazabilidad entre despacho y pedido, las transiciones de estado, la facturación y el rechazo transaccional de saldo negativo o sobrepago quedan para una etapa posterior.
+CatDB conserva hechos registrados. Las fechas de seguimiento proceden de los datos de ejemplo. La muestra usa un calendario ficticio de 2030 para que las consultas sean repetibles. El alcance excluye diagnósticos, recomendaciones médicas, dosis, personas reales y automatización de recordatorios.

@@ -1,73 +1,104 @@
-# Modelo de datos
+# Modelo conceptual, lógico y diagrama ER
 
-## Modelo conceptual
+En CatDB, el gato es el punto de partida para investigar alimentación, pesos, visitas, gastos y actividades. Una persona puede cuidar a varios gatos y cada gato puede tener varias personas vinculadas. Una visita puede registrar varias vacunas y tratamientos. La visita relaciona ambos hechos con el gato.
 
-Un cliente puede realizar varios pedidos. Cada pedido agrupa líneas y recibe pagos parciales. Cada línea corresponde a un producto y conserva el precio de la venta. Los productos pertenecen a una categoría y pueden tener varios proveedores. Una bodega habilita posiciones para productos y cada posición acumula movimientos de inventario.
-
-## Modelo lógico
-
-Las claves primarias se muestran en el diagrama. También son únicas las claves candidatas de negocio `customers.email`, `suppliers.supplier_code`, `categories.name`, `products.sku`, `warehouses.code` y `payments.reference`. Los campos utilizados en cada relación se detallan en el [DDL](../sql/01_schema.sql).
+Cada FK tiene un padre obligatorio y cada padre admite cero o más filas hijas. Las líneas sólidas muestran relaciones identificadoras, donde la FK forma parte de la PK hija. Las líneas punteadas muestran relaciones con identidad propia. `UK` marca claves únicas de una sola columna. La restricción compuesta `UNIQUE (cat_id, measured_on)` de `weights` complementa las marcas del diagrama.
 
 ```mermaid
 erDiagram
-    CUSTOMERS ||--o{ SALES_ORDERS : realiza
-    SALES_ORDERS ||--o{ ORDER_ITEMS : contiene
-    SALES_ORDERS ||--o{ PAYMENTS : recibe
-    PRODUCTS ||--o{ ORDER_ITEMS : aparece_en
-    CATEGORIES ||--o{ PRODUCTS : clasifica
-    PRODUCTS ||--o{ PRODUCT_SUPPLIERS : tiene
-    SUPPLIERS ||--o{ PRODUCT_SUPPLIERS : suministra
-    WAREHOUSES ||--o{ INVENTORY_POSITIONS : habilita
-    PRODUCTS ||--o{ INVENTORY_POSITIONS : ocupa
-    INVENTORY_POSITIONS ||--o{ STOCK_MOVEMENTS : registra
-    CUSTOMERS {
-        bigint customer_id PK
+    activities {
+        int8 activity_id PK
+        int8 cat_id FK
+        timestamptz occurred_at
+        text activity_type
+        text note
     }
-    SALES_ORDERS {
-        bigint order_id PK
-        bigint customer_id FK
+    caregivers {
+        int8 caregiver_id PK
+        text alias UK
     }
-    ORDER_ITEMS {
-        bigint order_id PK,FK
-        integer line_number PK
-        bigint product_id FK
+    caregivers ||--o{ cat_caregivers : caregiver_id
+    cat_caregivers {
+        int8 cat_id PK,FK
+        int8 caregiver_id PK,FK
+        text role
     }
-    PAYMENTS {
-        bigint payment_id PK
-        bigint order_id FK
+    cats {
+        int8 cat_id PK
+        text cat_code UK
+        text name
+        date birth_date
+        text coat
     }
-    CATEGORIES {
-        bigint category_id PK
+    cats ||--o{ cat_caregivers : cat_id
+    cats ||..o{ activities : cat_id
+    cats ||..o{ expenses : cat_id
+    cats ||..o{ feedings : cat_id
+    cats ||..o{ vet_visits : cat_id
+    cats ||..o{ weights : cat_id
+    expenses {
+        int8 expense_id PK
+        int8 cat_id FK
+        date incurred_on
+        text category
+        int4 amount_clp
     }
-    PRODUCTS {
-        bigint product_id PK
-        bigint category_id FK
+    feedings {
+        int8 feeding_id PK
+        int8 cat_id FK
+        int8 food_id FK
+        timestamptz fed_at
+        int4 grams
     }
-    PRODUCT_SUPPLIERS {
-        bigint product_id PK,FK
-        bigint supplier_id PK,FK
+    foods {
+        int8 food_id PK
+        text name UK
+        text food_type
     }
-    SUPPLIERS {
-        bigint supplier_id PK
+    foods ||..o{ feedings : food_id
+    medications {
+        int8 medication_id PK
+        text name UK
     }
-    WAREHOUSES {
-        bigint warehouse_id PK
+    medications ||..o{ treatments : medication_id
+    treatments {
+        int8 treatment_id PK
+        int8 visit_id FK
+        int8 medication_id FK
+        date started_on
+        date ended_on
     }
-    INVENTORY_POSITIONS {
-        bigint warehouse_id PK,FK
-        bigint product_id PK,FK
+    vaccinations {
+        int8 visit_id PK,FK
+        int8 vaccine_id PK,FK
     }
-    STOCK_MOVEMENTS {
-        bigint movement_id PK
-        bigint warehouse_id FK
-        bigint product_id FK
+    vaccines {
+        int8 vaccine_id PK
+        text name UK
+    }
+    vaccines ||--o{ vaccinations : vaccine_id
+    vet_visits {
+        int8 visit_id PK
+        int8 cat_id FK
+        date visited_on
+        text reason
+        date follow_up_on
+    }
+    vet_visits ||--o{ vaccinations : visit_id
+    vet_visits ||..o{ treatments : visit_id
+    weights {
+        int8 weight_id PK
+        int8 cat_id FK
+        date measured_on
+        int4 grams
     }
 ```
 
-La relación entre movimientos y posiciones usa una sola clave foránea compuesta por `warehouse_id` y `product_id`.
+## Normalización hasta 3FN
 
-## Normalización
+1. **1FN.** Una fila registra un hecho y cada campo contiene un valor. Un catálogo de gatos no tiene listas de dueños, vacunas o pesos en una celda.
+2. **2FN.** En `cat_caregivers`, el rol depende de la pareja completa `(cat_id, caregiver_id)`. En `vaccinations` la pareja identifica el hecho sin atributos adicionales. En `weights`, los gramos dependen de la pareja `(cat_id, measured_on)` y no de uno de sus componentes.
+3. **3FN.** Las descripciones de alimentos, vacunas y medicamentos viven en sus catálogos. Un tratamiento guarda la visita y de ella se obtiene el gato, lo que evita la dependencia transitiva tratamiento → visita → gato. Los totales de gasto se calculan a partir de los hechos.
 
-1. **1FN.** Los valores son escalares. Las líneas de pedido, pagos y vínculos entre productos y proveedores residen en filas independientes.
-2. **2FN.** En `order_items`, el producto, la cantidad y el precio pactado dependen de la combinación `(order_id, line_number)`. Las otras tablas de clave compuesta representan asociaciones y carecen de atributos no clave.
-3. **3FN.** Los nombres de categoría, cliente y proveedor se almacenan en sus entidades. El precio de catálogo depende del producto. El precio pactado depende de la línea y preserva el historial cuando cambia el catálogo. Existencias y saldos se calculan en vistas a partir de movimientos, líneas y pagos.
+[Detalle de las 13 tablas](aprendizaje/03-modelo-relacional.md).
+[Diagrama en SVG](diagrama.svg).

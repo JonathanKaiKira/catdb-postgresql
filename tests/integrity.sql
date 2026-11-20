@@ -1,85 +1,47 @@
 BEGIN;
-SET LOCAL search_path TO inventory_sales, pg_catalog;
+SET LOCAL search_path TO catdb, pg_catalog;
 
-CREATE FUNCTION pg_temp.expect_sqlstate(statement text, expected_sqlstate text)
+CREATE FUNCTION pg_temp.expect_sqlstate(statement text, expected text)
 RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
     EXECUTE statement;
-    RAISE EXCEPTION 'Se esperaba SQLSTATE % para %', expected_sqlstate, statement;
+    RAISE EXCEPTION 'Se esperaba SQLSTATE % para %', expected, statement;
 EXCEPTION WHEN OTHERS THEN
-    IF SQLSTATE <> expected_sqlstate THEN
+    IF SQLSTATE <> expected THEN
         RAISE;
     END IF;
 END;
 $$;
 
+SELECT pg_temp.expect_sqlstate($$UPDATE cats SET cat_code = 'LUNA' WHERE cat_code = 'MILO'$$, '23505');
+SELECT pg_temp.expect_sqlstate($$UPDATE cats SET name = NULL$$, '23502');
+SELECT pg_temp.expect_sqlstate($$INSERT INTO cat_caregivers (cat_id, caregiver_id, role) SELECT cat_id, -1, 'owner' FROM cats WHERE cat_code = 'LUNA'$$, '23503');
+SELECT pg_temp.expect_sqlstate($$INSERT INTO cat_caregivers SELECT * FROM cat_caregivers$$, '23505');
+SELECT pg_temp.expect_sqlstate($$UPDATE cat_caregivers SET role = 'guest'$$, '23514');
+SELECT pg_temp.expect_sqlstate($$UPDATE feedings SET food_id = -1$$, '23503');
+SELECT pg_temp.expect_sqlstate($$UPDATE feedings SET grams = 0$$, '23514');
+SELECT pg_temp.expect_sqlstate($$UPDATE weights SET grams = -1$$, '23514');
 SELECT pg_temp.expect_sqlstate(
-    $$INSERT INTO customers (email, full_name) VALUES ('ana@example.test', 'Otra persona')$$,
-    '23505');
-SELECT pg_temp.expect_sqlstate(
-    $$INSERT INTO customers (email, full_name) VALUES (NULL, 'Otra persona')$$, '23502');
-SELECT pg_temp.expect_sqlstate(
-    $$INSERT INTO sales_orders (customer_id) VALUES (-1)$$, '23503');
-SELECT pg_temp.expect_sqlstate(
-    $$INSERT INTO order_items SELECT * FROM order_items$$, '23505');
-SELECT pg_temp.expect_sqlstate(
-    $$UPDATE order_items SET quantity = 0$$, '23514');
-SELECT pg_temp.expect_sqlstate(
-    $$UPDATE order_items SET unit_price = 'NaN'$$, '23514');
-SELECT pg_temp.expect_sqlstate(
-    $$UPDATE payments SET amount = -1$$, '23514');
-SELECT pg_temp.expect_sqlstate(
-    $$INSERT INTO payments (order_id, reference, amount)
-      SELECT order_id, reference, amount FROM payments$$, '23505');
-SELECT pg_temp.expect_sqlstate(
-    $$UPDATE stock_movements SET movement_type = 'shipment', quantity_delta = 1$$, '23514');
-SELECT pg_temp.expect_sqlstate(
-    $$UPDATE stock_movements SET warehouse_id = (SELECT warehouse_id FROM warehouses
-       WHERE code = 'VAP') WHERE product_id = (SELECT product_id FROM products
-       WHERE sku = 'BOX-01')$$, '23503');
-SELECT pg_temp.expect_sqlstate(
-    $$DELETE FROM products WHERE sku = 'NOTE-01'$$, '23503');
+    $$INSERT INTO weights (cat_id, measured_on, grams)
+      SELECT cat_id, measured_on, grams FROM weights LIMIT 1$$, '23505');
+SELECT pg_temp.expect_sqlstate($$UPDATE vet_visits SET follow_up_on = visited_on$$, '23514');
+SELECT pg_temp.expect_sqlstate($$INSERT INTO vaccinations SELECT * FROM vaccinations$$, '23505');
+SELECT pg_temp.expect_sqlstate($$UPDATE vaccinations SET vaccine_id = -1$$, '23503');
+SELECT pg_temp.expect_sqlstate($$UPDATE treatments SET ended_on = started_on - 1$$, '23514');
+SELECT pg_temp.expect_sqlstate($$UPDATE treatments SET medication_id = -1$$, '23503');
+SELECT pg_temp.expect_sqlstate($$UPDATE expenses SET amount_clp = -1$$, '23514');
+SELECT pg_temp.expect_sqlstate($$UPDATE activities SET note = '  '$$, '23514');
+SELECT pg_temp.expect_sqlstate($$DELETE FROM cats WHERE cat_code = 'LUNA'$$, '23503');
 
 DO $$
 BEGIN
-    IF (SELECT count(*) FROM order_balances) <> 1 OR NOT EXISTS (
-        SELECT FROM order_balances
-        WHERE order_total = 8200 AND paid_total = 5000 AND outstanding_balance = 3200
-    ) THEN
-        RAISE EXCEPTION 'Los totales del pedido son incorrectos';
-    END IF;
-
-    IF EXISTS (
-        (SELECT warehouses.code, products.sku, balances.quantity_on_hand
-         FROM inventory_balances AS balances
-         JOIN warehouses USING (warehouse_id)
-         JOIN products USING (product_id)
-         EXCEPT ALL VALUES ('SCL', 'NOTE-01', 48), ('SCL', 'BOX-01', 19), ('VAP', 'NOTE-01', 0))
-        UNION ALL
-        (VALUES ('SCL', 'NOTE-01', 48), ('SCL', 'BOX-01', 19), ('VAP', 'NOTE-01', 0)
-         EXCEPT ALL
-         SELECT warehouses.code, products.sku, balances.quantity_on_hand
-         FROM inventory_balances AS balances
-         JOIN warehouses USING (warehouse_id)
-         JOIN products USING (product_id))
-    ) THEN
-        RAISE EXCEPTION 'Las existencias de la muestra son incorrectas';
-    END IF;
-
-    INSERT INTO sales_orders (customer_id)
-    SELECT customer_id FROM customers WHERE email = 'leo@example.test';
-
-    IF NOT EXISTS (
-        SELECT FROM order_balances
-        JOIN sales_orders USING (order_id)
-        JOIN customers USING (customer_id)
-        WHERE email = 'leo@example.test' AND order_total = 0
-            AND paid_total = 0 AND outstanding_balance = 0
-    ) THEN
-        RAISE EXCEPTION 'El pedido vacío debe tener saldo cero';
+    IF (SELECT count(*) FROM cats) <> 4
+       OR (SELECT count(*) FROM activities) <> 3
+       OR (SELECT count(*) FROM vet_visits WHERE follow_up_on IS NULL) <> 2 THEN
+        RAISE EXCEPTION 'La muestra de gatos, actividades o seguimientos opcionales es incorrecta';
     END IF;
 END;
 $$;
 
 ROLLBACK;
-\echo 'Integridad verificada (11 rechazos esperados y 3 comprobaciones de saldos).'
+\echo 'Integridad verificada (17 rechazos esperados y 3 comprobaciones de muestra).'

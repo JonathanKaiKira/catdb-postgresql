@@ -1,7 +1,7 @@
-# Mantenimiento del modelo
+# Mantenimiento de CatDB
 
-- Mantén alineados los requisitos, el diagrama ER y el DDL.
-- Usa español en documentación e inglés para identificadores SQL.
-- Usa datos ficticios y una base efímera. No incluyas credenciales, volcados privados ni archivos de entorno reales.
-- Ejecuta `./scripts/verify.sh` antes de entregar cambios al modelo. Registra resultados reales.
-- Conserva la separación entre consultas de conciliación y reglas que se impongan mediante restricciones o transacciones.
+- Mantén el DDL, la guía de tablas y el diagrama ER alineados. El CI compara Mermaid con el catálogo real.
+- Usa español en la documentación e inglés para identificadores SQL. Incluye únicamente datos ficticios.
+- Ejecuta `./scripts/verify.sh` tras cambios en SQL o ejemplos. Prueba el ciclo de `demo.sh` si modificas la operación local.
+- Conserva el volumen al detener la demostración. Mantén las credenciales locales fuera de Git.
+- Describe casos límite y resultados verificables para enseñar cada técnica.

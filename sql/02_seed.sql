@@ -1,60 +1,75 @@
-BEGIN;
-SET LOCAL search_path TO inventory_sales, pg_catalog;
+INSERT INTO catdb.cats (cat_code, name, birth_date, coat) VALUES
+    ('LUNA', 'Luna', '2022-04-12', 'negro'),
+    ('MILO', 'Milo', '2021-09-02', 'atigrado naranja'),
+    ('NUBE', 'Nube', NULL, 'blanco'),
+    ('PIPA', 'Pipa', '2024-03-14', 'gris');
 
-INSERT INTO customers (email, full_name) VALUES
-    ('ana@example.test', 'Ana Rojas'), ('leo@example.test', 'Leo Soto');
-INSERT INTO suppliers (supplier_code, name) VALUES
-    ('SUM-A', 'Suministros Andinos'), ('SUM-B', 'Distribuidora Austral');
-INSERT INTO categories (name) VALUES ('Oficina'), ('Embalaje');
-INSERT INTO products (sku, name, category_id, list_price)
-SELECT sample.sku, sample.name, categories.category_id, sample.price
-FROM (VALUES ('NOTE-01', 'Cuaderno', 'Oficina', 3500),
-             ('BOX-01', 'Caja mediana', 'Embalaje', 1800))
-    AS sample(sku, name, category_name, price)
-JOIN categories ON categories.name = sample.category_name;
+INSERT INTO catdb.caregivers (alias) VALUES ('Casa Norte'), ('Casa Sur'), ('Apoyo A');
+INSERT INTO catdb.cat_caregivers (cat_id, caregiver_id, role)
+SELECT c.cat_id, r.caregiver_id, s.role
+FROM (VALUES ('LUNA', 'Casa Norte', 'owner'), ('LUNA', 'Apoyo A', 'caregiver'),
+             ('MILO', 'Casa Norte', 'owner'), ('NUBE', 'Casa Sur', 'owner'))
+    AS s(cat_code, alias, role)
+JOIN catdb.cats AS c USING (cat_code)
+JOIN catdb.caregivers AS r USING (alias);
 
-INSERT INTO product_suppliers (product_id, supplier_id)
-SELECT products.product_id, suppliers.supplier_id
-FROM products CROSS JOIN suppliers
-WHERE products.sku = 'NOTE-01' OR suppliers.supplier_code = 'SUM-B';
+INSERT INTO catdb.foods (name, food_type) VALUES ('Húmedo A', 'wet'), ('Seco B', 'dry');
+INSERT INTO catdb.feedings (cat_id, food_id, fed_at, grams)
+SELECT c.cat_id, f.food_id, s.fed_at::timestamptz, s.grams
+FROM (VALUES ('LUNA', 'Húmedo A', '2030-05-10 12:00+00', 85),
+             ('LUNA', 'Seco B', '2030-05-10 20:00+00', 30),
+             ('MILO', 'Seco B', '2030-05-10 12:00+00', 45),
+             ('MILO', 'Húmedo A', '2030-05-11 12:00+00', 75),
+             ('NUBE', 'Húmedo A', '2030-05-11 12:00+00', 80))
+    AS s(cat_code, food_name, fed_at, grams)
+JOIN catdb.cats AS c USING (cat_code)
+JOIN catdb.foods AS f ON f.name = s.food_name;
 
-INSERT INTO warehouses (code) VALUES ('SCL'), ('VAP');
-INSERT INTO inventory_positions (warehouse_id, product_id)
-SELECT warehouse_id, product_id
-FROM warehouses CROSS JOIN products
-WHERE code = 'SCL' OR sku = 'NOTE-01';
+INSERT INTO catdb.weights (cat_id, measured_on, grams)
+SELECT c.cat_id, s.measured_on::date, s.grams
+FROM (VALUES ('LUNA', '2030-03-01', 4100), ('LUNA', '2030-04-01', 4200),
+             ('LUNA', '2030-05-01', 4150), ('MILO', '2030-04-01', 5200),
+             ('MILO', '2030-05-01', 5150), ('NUBE', '2030-05-01', 3600))
+    AS s(cat_code, measured_on, grams)
+JOIN catdb.cats AS c USING (cat_code);
 
-INSERT INTO stock_movements
-    (warehouse_id, product_id, movement_type, quantity_delta, occurred_at)
-SELECT warehouses.warehouse_id, products.product_id, sample.kind, sample.delta,
-       sample.event_time::timestamptz
-FROM (VALUES ('NOTE-01', 'receipt', 50, '2026-01-14 09:00+00'),
-             ('NOTE-01', 'shipment', -2, '2026-01-15 12:50+00'),
-             ('BOX-01', 'receipt', 20, '2026-01-14 10:00+00'),
-             ('BOX-01', 'shipment', -1, '2026-01-15 12:50+00'))
-    AS sample(sku, kind, delta, event_time)
-JOIN products USING (sku)
-JOIN warehouses ON warehouses.code = 'SCL';
+INSERT INTO catdb.vet_visits (cat_id, visited_on, reason, follow_up_on)
+SELECT c.cat_id, s.visited_on::date, s.reason, s.follow_up_on::date
+FROM (VALUES ('LUNA', '2030-04-05', 'Control general', NULL),
+             ('LUNA', '2030-05-03', 'Registro preventivo', '2030-06-03'),
+             ('MILO', '2030-05-08', 'Consulta de seguimiento', '2030-06-08'),
+             ('NUBE', '2030-05-09', 'Primera consulta', NULL))
+    AS s(cat_code, visited_on, reason, follow_up_on)
+JOIN catdb.cats AS c USING (cat_code);
 
-WITH sample_order AS (
-    INSERT INTO sales_orders (customer_id, ordered_at)
-    SELECT customer_id, '2026-01-15 12:00+00'
-    FROM customers WHERE email = 'ana@example.test'
-    RETURNING order_id
-), sample_items AS (
-    INSERT INTO order_items (order_id, line_number, product_id, quantity, unit_price)
-    SELECT sample_order.order_id, sample.line_number, products.product_id,
-           sample.quantity, sample.price
-    FROM (VALUES ('NOTE-01', 1, 2, 3200), ('BOX-01', 2, 1, 1800))
-        AS sample(sku, line_number, quantity, price)
-    JOIN products USING (sku)
-    CROSS JOIN sample_order
-)
-INSERT INTO payments (order_id, reference, amount, paid_at)
-SELECT order_id, sample.reference, sample.amount, sample.event_time::timestamptz
-FROM sample_order
-CROSS JOIN (VALUES ('DEMO-001', 3000, '2026-01-15 12:05+00'),
-                   ('DEMO-002', 2000, '2026-01-15 12:10+00'))
-    AS sample(reference, amount, event_time);
+INSERT INTO catdb.vaccines (name) VALUES ('Vacuna ficticia A'), ('Vacuna ficticia B');
+INSERT INTO catdb.vaccinations (visit_id, vaccine_id)
+SELECT v.visit_id, x.vaccine_id
+FROM catdb.vet_visits AS v
+JOIN catdb.cats AS c USING (cat_id)
+JOIN catdb.vaccines AS x ON x.name = 'Vacuna ficticia A'
+WHERE c.cat_code = 'LUNA' AND v.visited_on = DATE '2030-05-03';
 
-COMMIT;
+INSERT INTO catdb.medications (name) VALUES ('Medicamento ficticio A'), ('Medicamento ficticio B');
+INSERT INTO catdb.treatments (visit_id, medication_id, started_on, ended_on)
+SELECT v.visit_id, m.medication_id, DATE '2030-05-08', DATE '2030-05-12'
+FROM catdb.vet_visits AS v
+JOIN catdb.cats AS c USING (cat_id)
+JOIN catdb.medications AS m ON m.name = 'Medicamento ficticio A'
+WHERE c.cat_code = 'MILO' AND v.visited_on = DATE '2030-05-08';
+
+INSERT INTO catdb.expenses (cat_id, incurred_on, category, amount_clp)
+SELECT c.cat_id, s.incurred_on::date, s.category, s.amount_clp
+FROM (VALUES ('LUNA', '2030-05-01', 'food', 10000), ('LUNA', '2030-05-03', 'vet', 25000),
+             ('MILO', '2030-05-08', 'vet', 18000), ('MILO', '2030-05-11', 'food', 8000),
+             ('NUBE', '2030-05-09', 'supplies', 9000))
+    AS s(cat_code, incurred_on, category, amount_clp)
+JOIN catdb.cats AS c USING (cat_code);
+
+INSERT INTO catdb.activities (cat_id, occurred_at, activity_type, note)
+SELECT c.cat_id, s.occurred_at::timestamptz, s.activity_type, s.note
+FROM (VALUES ('LUNA', '2030-05-10 18:00+00', 'play', 'Jugó con una pelota'),
+             ('MILO', '2030-05-10 20:00+00', 'rest', 'Durmió en la manta'),
+             ('NUBE', '2030-05-11 18:00+00', 'observation', 'Exploró una caja'))
+    AS s(cat_code, occurred_at, activity_type, note)
+JOIN catdb.cats AS c USING (cat_code);

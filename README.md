@@ -1,55 +1,50 @@
-# Diseño de base de datos para inventario y ventas
+# CatDB · CatHub
 
-Una distribuidora ficticia necesita saber qué vende, quién le suministra cada producto, cuánto stock tiene en cada bodega y qué saldo queda por cobrar. Este proyecto implementa el modelo relacional en **PostgreSQL 17**, con restricciones declarativas, datos ficticios y consultas de conciliación.
+CatDB es una base de datos de **PostgreSQL 17** para explorar el historial de cuidado de gatos domésticos ficticios. El modelo permite seguir quién cuida a cada gato, comparar sus mediciones, sumar gastos y consultar visitas y seguimientos registrados.
 
-## Ejecutar y reproducir
+## Demostración local
 
-Requisitos locales: Bash y Podman. El comando descarga la imagen oficial de PostgreSQL 17 si hace falta.
-
-```bash
-./scripts/verify.sh
-```
-
-Con Docker:
+En Fedora, con Bash y Podman:
 
 ```bash
-CONTAINER_ENGINE=docker ./scripts/verify.sh
+./scripts/demo.sh start
+./scripts/demo.sh info
 ```
 
-El script arranca PostgreSQL en un contenedor temporal sin red ni puertos, aplica el esquema y la muestra, ejecuta las consultas y verifica la integridad. El acceso local del contenedor usa autenticación `trust` para esta ejecución efímera. El contenedor se elimina al terminar.
-
-En una base de pruebas existente cuyo usuario pueda crear esquemas, también puedes usar `psql` desde la raíz:
+La primera ejecución descarga la imagen oficial `postgres:17` si hace falta y carga el escenario. DBeaver se conecta a `127.0.0.1:55432`, base `catdb`, usuario `catdb_dev`. El script genera una contraseña local y muestra la ubicación del archivo privado, excluido de Git. Sigue la [guía de DBeaver](docs/aprendizaje/05-guia-visual.md) y el [recorrido de 12 minutos](docs/aprendizaje/09-recorrido-demo.md).
 
 ```bash
-psql -X -v ON_ERROR_STOP=1 -d portfolio \
-  -f sql/01_schema.sql -f sql/02_seed.sql -f sql/03_validate.sql \
-  -f tests/integrity.sql
+./scripts/demo.sh test
+./scripts/demo.sh stop
 ```
 
-La base `portfolio` debe existir y el esquema `inventory_sales` debe estar libre al aplicar los scripts. Usa una base limpia para repetir la instalación. Las pruebas revierten sus cambios de datos.
+`test` usa una base temporal sin red. Comprueba restricciones, resultados SQL y correspondencia del diagrama con el catálogo. `stop` conserva el volumen y `start` vuelve a abrir la misma base.
 
-## Resultados reproducibles
+### Repetir desde una base limpia
 
-| Bodega | SKU | Unidades |
-| --- | --- | ---: |
-| SCL | BOX-01 | 19 |
-| SCL | NOTE-01 | 48 |
-| VAP | NOTE-01 | 0 |
+Usa otra instancia y otro puerto para conservar la demostración anterior. Emplea el mismo nombre de instancia en los comandos de esa sesión.
 
-El pedido de muestra suma **8.200 CLP**. Sus dos pagos totalizan **5.000 CLP** y el saldo por cobrar es **3.200 CLP**. Las consultas de excepción devuelven cero filas para estos datos.
+```bash
+CATDB_INSTANCE=catdb-practica CATDB_PORT=55433 ./scripts/demo.sh start
+CATDB_INSTANCE=catdb-practica ./scripts/demo.sh stop
+```
 
-## Estructura
+Si necesitas eliminar la instancia original, revisa primero qué datos quieres conservar y confirma explícitamente esa eliminación antes de actuar. El [procedimiento de limpieza manual](docs/operacion.md) identifica los recursos afectados.
+
+## Resultados de la muestra
+
+Hay cuatro gatos ficticios. Luna tiene dos responsables, tres mediciones y **35.000 CLP** en gastos. Entre sus dos últimas mediciones hay una diferencia de **−50 g**. Pipa aparece en las consultas de responsables y gastos aunque aún carece de historial. Con un corte ficticio al **15 de mayo de 2030**, se muestran los seguimientos registrados para Luna y Milo.
+
+## Explorar el repositorio
 
 | Ruta | Contenido |
 | --- | --- |
-| [docs/requisitos.md](docs/requisitos.md) | Alcance y reglas de negocio |
-| [docs/modelo.md](docs/modelo.md) | Modelos conceptual y lógico, diagrama ER y 3FN |
-| [docs/arquitectura.md](docs/arquitectura.md) | Diseño físico, índices y decisiones |
-| [docs/validacion.md](docs/validacion.md) | Evidencia de la ejecución local |
-| [sql/](sql/) | Esquema, muestra y consultas |
-| [tests/integrity.sql](tests/integrity.sql) | Pruebas de restricciones y saldos |
-| [scripts/verify.sh](scripts/verify.sh) | Verificación en un contenedor efímero |
-| [.github/workflows/postgresql.yml](.github/workflows/postgresql.yml) | Validación automática con GitHub Actions |
-| [AGENTS.md](AGENTS.md) | Pautas de mantenimiento |
+| [docs/requisitos.md](docs/requisitos.md) | Reglas de negocio y alcance |
+| [docs/modelo.md](docs/modelo.md) | Diagrama Mermaid, SVG y normalización a 3FN |
+| [docs/arquitectura.md](docs/arquitectura.md) | Tipos, restricciones e índices |
+| [docs/aprendizaje/](docs/aprendizaje/) | Guías, 10 consultas, ejercicios, soluciones y entrevista |
+| [sql/](sql/) | DDL, muestra ficticia, consultas de validación y demostración |
+| [scripts/](scripts/) y [tests/](tests/) | Entorno persistente, suite efímera y resultados esperados |
+| [docs/validacion.md](docs/validacion.md) | Resultados realmente ejecutados |
 
-Licencia [MIT](LICENSE).
+CatDB almacena hechos de un escenario ficticio. El alcance se limita al diseño relacional y a consultas de lectura del historial. Licencia [MIT](LICENSE).
