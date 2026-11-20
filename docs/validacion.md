@@ -11,7 +11,7 @@ Ejecuté la demostración en Fedora con Podman rootless y PostgreSQL **17.12**, 
 | Diagrama | Mermaid coincide con el catálogo de PostgreSQL. El SVG se generó a partir de ese modelo y se comprobaron sus 13 tablas y 13 aristas |
 | Ciclo de Podman | Arranque, arranque repetido, detención con volumen conservado y reinicio con los cuatro gatos |
 | Red | `podman port` y `ss` mostraron `127.0.0.1:55432` |
-| Cliente gráfico | DBeaver Community 26.2.4 abrió un editor para CatDB y confirmó la conexión a PostgreSQL 17.12 mediante JDBC 42.7.13 |
+| Cliente gráfico | DBeaver Community 26.2.4 abrió 04_demo.sql y confirmó la conexión a PostgreSQL 17.12 mediante JDBC 42.7.13. El navegador mostró las 13 tablas y la primera consulta devolvió cuatro filas en el editor |
 | GitHub Actions | El flujo está preparado. La ejecución remota depende de la primera publicación |
 
 La prueba de consumo con cero gramos de la guía corresponde a un caso `23514` en la suite. El plan de peso sirve para analizar la muestra con DBeaver. El planificador puede elegir otra estrategia según los datos.
