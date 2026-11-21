@@ -40,3 +40,4 @@ jobs:
           if ($LASTEXITCODE -ne 1 -or ($output | Out-String) -notmatch 'valid TCP port') {
             throw "Invalid port did not produce the expected error: $output"
           }
+          exit 0

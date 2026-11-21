@@ -18,3 +18,4 @@ Ejecuté la demostración en Fedora con Podman rootless y PostgreSQL **17.12**, 
 La prueba de consumo con cero gramos de la guía corresponde a un caso `23514` en la suite. El plan de peso sirve para analizar la muestra con DBeaver. El planificador puede elegir otra estrategia según los datos.
 
 El ciclo actualizado en Fedora comprobó 13 tablas tras el arranque y conservó una fila insertada por la prueba después de detener y volver a iniciar la instancia.
+Una prueba con un puerto de loopback ocupado confirmó que el arranque falla y muestra cómo recuperarse.
