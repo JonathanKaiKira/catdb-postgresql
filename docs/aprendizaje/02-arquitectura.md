@@ -1,6 +1,6 @@
 # 02 · Arquitectura
 
-`sql/01_schema.sql` define la estructura, `02_seed.sql` carga el escenario y `04_demo.sql` contiene los ejemplos. `scripts/demo.sh` mantiene el entorno persistente y `scripts/verify.sh` prueba el mismo SQL en otro contenedor. El [diagrama](../modelo.md) se valida contra el catálogo de PostgreSQL.
+`sql/01_schema.sql` define la estructura, `02_seed.sql` carga el escenario y `04_demo.sql` contiene los ejemplos. `scripts/demo.sh` en Fedora y `scripts/demo.ps1` en Windows mantienen el entorno persistente. El comando `test` de cada script ejecuta la misma suite SQL en otro contenedor. El [diagrama](../modelo.md) se valida contra el catálogo de PostgreSQL.
 
 - **Identidad.** El ID se usa para referencias internas y el código `LUNA` sirve como identificador legible en ejemplos.
 - **Historial.** Peso y alimentación tienen filas separadas por evento. Así es posible comparar períodos sin sobrescribir mediciones.

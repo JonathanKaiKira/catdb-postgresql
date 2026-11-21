@@ -1,6 +1,8 @@
 # Operación de la demostración
 
-El entorno usa Podman rootless y un volumen nombrado. La publicación de TCP se limita a `127.0.0.1`. `CATDB_INSTANCE` permite separar volúmenes, nombres de contenedor y contraseñas. `CATDB_PORT` permite elegir un puerto libre al crear la instancia. Mantén ese puerto al reiniciarla. La configuración local tiene permisos privados y el repositorio la ignora.
+El entorno usa Podman rootless en Fedora y Docker Desktop con contenedores Linux en Windows. Ambos motores guardan los datos en un volumen nombrado. La publicación de TCP se limita a `127.0.0.1`. `CATDB_INSTANCE` permite separar volúmenes, nombres de contenedor y contraseñas. `CATDB_PORT` permite elegir un puerto libre al crear la instancia. Mantén ese puerto al reiniciarla. La configuración local se guarda en `.catdb/` con acceso restringido y Git la ignora. Usa una carpeta local de tu cuenta. En Windows, el script aplica permisos NTFS al directorio para tu usuario.
+
+Sigue la instalación desde cero y el inicio rápido del [README en español](../README.es.md#requisitos-e-instalación). El comando `test` puede ejecutarse aunque la demostración esté detenida.
 
 En una base de pruebas vacía ya existente, puedes usar `psql` directamente:
 
@@ -32,3 +34,25 @@ fi
 ```
 
 Tras borrarlos, `start` reconstruye la muestra. El archivo local de conexión se conserva y permanece excluido de Git.
+
+En Windows, abre PowerShell 7 en la raíz del clon. Comprueba que los recursos pertenecen a la instancia que quieres borrar y confirma el nombre del volumen.
+
+```powershell
+.\scripts\demo.ps1 stop
+docker container ls -a --filter name=catdb-postgresql-demo
+docker volume ls --filter name=catdb-postgresql-demo-data
+$confirm = Read-Host 'Escribe catdb-postgresql-demo-data para confirmar el borrado'
+if ($confirm -ceq 'catdb-postgresql-demo-data') {
+    docker container rm catdb-postgresql-demo
+    if ($LASTEXITCODE -eq 0) {
+        docker volume rm catdb-postgresql-demo-data
+    }
+}
+```
+
+## Diagnóstico por síntoma
+
+- Si falla la primera descarga, verifica la conexión al registro y vuelve a ejecutar `start`. Puedes comprobar la descarga con `docker pull docker.io/library/postgres:17` o `podman pull docker.io/library/postgres:17`.
+- Si falla la inicialización, comprueba los registros con `docker logs catdb-postgresql-demo` o `podman logs catdb-postgresql-demo`. Usa el nombre de la instancia alternativa si corresponde.
+- Si un servicio ya usa el puerto, el motor informa del conflicto al reservarlo. Libera el puerto y reintenta o elige un nombre y puerto libres. Si el nombre ya corresponde a un contenedor existente, conserva el puerto original.
+- Si se perdió la credencial de un volumen existente, restaura el archivo indicado por `info` desde el respaldo original. Arrancar una instancia distinta permite seguir practicando mientras conservas ese volumen.

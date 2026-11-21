@@ -28,7 +28,7 @@
 
 **14. ¿Cuándo usarías `LAG`?** Para medir la diferencia respecto de la fila anterior sin colapsar las filas. Particiono por gato y ordeno por fecha.
 
-**15. ¿Cómo se reproduce el entorno?** Podman carga el esquema y la muestra juntos en una transacción. El entorno de demostración conserva el volumen y la suite crea una base efímera sin red.
+**15. ¿Cómo se reproduce el entorno?** Los scripts de Fedora y Windows cargan el esquema y la muestra juntos en una transacción. El entorno de demostración conserva el volumen y la suite crea una base efímera sin red.
 
 **16. ¿Qué cambia al escalar?** Revisaría consultas reales, cardinalidad y costo de escritura de los índices. La paginación y una estrategia de retención pueden cobrar importancia en cronologías.
 

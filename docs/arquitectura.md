@@ -4,7 +4,7 @@
 - `date` representa días en visitas, gastos, pesos y tratamientos. `timestamptz` representa instantes en alimentación y actividades. La demostración agrupa consumos por fecha UTC.
 - Pesos y consumos se guardan en gramos. Los importes se registran como CLP enteros y PostgreSQL devuelve `bigint` al sumar esos enteros.
 - Las claves foráneas impiden borrar referencias con historial activo. No se imponen unicidad de propietario, coherencia temporal entre tablas ni validaciones clínicas. El modelo permite un gato sin responsables y varios responsables con el mismo rol.
-- El esquema y la muestra entran en una sola transacción. La demostración persiste en un volumen de Podman. La suite usa una instancia separada, efímera y sin red.
+- El esquema y la muestra entran en una sola transacción. La demostración persiste en un volumen nombrado de Podman en Fedora o de Docker Desktop en Windows. La suite usa una instancia separada, efímera y sin red.
 
 | Índice secundario | Acceso previsto |
 | --- | --- |

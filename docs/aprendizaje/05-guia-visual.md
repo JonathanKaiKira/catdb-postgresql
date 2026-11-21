@@ -1,8 +1,15 @@
 # 05 · Explorar CatDB en DBeaver
 
-## Conexión en Fedora
+## Instalar DBeaver Community
 
-1. Desde la raíz del repositorio ejecuta `./scripts/demo.sh start`. Si está en marcha, `./scripts/demo.sh info` muestra la configuración.
+- En Windows, descarga el instalador de Windows y completa el asistente. Abre DBeaver desde Inicio.
+- En Fedora, descarga el RPM para tu arquitectura y, en la terminal, ejecuta `sudo dnf install ./nombre-del-archivo.rpm` desde el directorio de descarga. Sustituye el nombre por el del RPM. También puedes instalar la edición Flatpak desde Flathub.
+
+[Descargas de DBeaver Community](https://dbeaver.io/download/)
+
+## Conectar con CatDB
+
+1. Desde la raíz del repositorio ejecuta `.\scripts\demo.ps1 start` en PowerShell 7 para Windows o `./scripts/demo.sh start` en Fedora. Usa `info` con el mismo script para consultar la configuración.
 2. Abre **DBeaver Community**. Elige **Database → New Database Connection → PostgreSQL**.
 3. Configura host `127.0.0.1`, puerto `55432`, base `catdb` y usuario `catdb_dev`. Si elegiste otro puerto, usa el de `info`.
 4. Abre localmente el archivo que indica `info` y copia solo el valor de `POSTGRES_PASSWORD` en el campo **Password**. Usa ese valor únicamente en DBeaver. Puedes dejar desactivado **Save password locally**.
@@ -16,7 +23,8 @@
 3. Abre `cat_caregivers` y revisa **Foreign Keys**. Para ver el mapa, abre el esquema `catdb` y busca la pestaña **ER Diagram**. También puedes seleccionar tablas y abrir **View Diagram** desde su menú contextual. DBeaver permite exportar la vista como imagen.
 4. Abre [04_demo.sql](../../sql/04_demo.sql) con **File → Open File** o copia su contenido a **SQL Editor → New SQL Script**. Selecciona `CatDB local` como conexión activa en la barra del editor.
 5. Sitúa el cursor dentro de la primera sentencia y pulsa `Ctrl+Enter`. Lee las filas de **Results** y repite con el [recorrido SQL](04-sql-explicado.md). Puedes ordenar columnas en la cuadrícula, pero conserva el `ORDER BY` del SQL para reproducir los resultados.
-6. Para finalizar, desconecta DBeaver y ejecuta `./scripts/demo.sh stop`. El volumen conserva los datos.
+6. Comprueba estos casos límite. La consulta de gastos devuelve cero para Pipa porque aún carece de gastos. Luna tiene dos responsables, tres mediciones y 35.000 CLP de gastos. La diferencia entre sus dos últimas mediciones es de −50 g.
+7. Para finalizar, desconecta DBeaver y ejecuta `.\scripts\demo.ps1 stop` o `./scripts/demo.sh stop`. El volumen conserva los datos.
 
 [Conexiones de DBeaver](https://dbeaver.com/docs/dbeaver/Create-Connection/) · [Controlador PostgreSQL](https://dbeaver.com/docs/dbeaver/Database-driver-PostgreSQL/)
 

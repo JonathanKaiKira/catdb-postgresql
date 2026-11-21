@@ -14,6 +14,18 @@ fi
 volume="$instance-data"
 config=".catdb/$instance.env"
 owner_label='io.cathub.project=catdb-postgresql'
+action="${1:-}"
+case "$action" in
+    start|stop|info|test) ;;
+    *) echo 'Uso: ./scripts/demo.sh {start|stop|info|test}' >&2; exit 2 ;;
+esac
+if [[ "$action" == test ]]; then
+    exec ./scripts/verify.sh
+fi
+if ! command -v podman >/dev/null || ! podman info >/dev/null; then
+    echo 'Instala Podman y comprueba su estado con podman info.' >&2
+    exit 1
+fi
 
 require_owner() {
     local kind="$1" name="$2"
@@ -42,6 +54,7 @@ wait_for_database() {
         sleep 1
     done
     podman logs "$instance" >&2
+    echo 'PostgreSQL no quedó listo en 60 segundos. Revisa los registros anteriores.' >&2
     return 1
 }
 
@@ -50,14 +63,22 @@ database_sql() {
 }
 
 connection_info() {
+    if ! podman container exists "$instance"; then
+        echo 'Inicia primero la instancia con ./scripts/demo.sh start.' >&2
+        return 1
+    fi
     require_container
-    printf 'Base: catdb\nUsuario: catdb_dev\nEsquema: catdb\nPuerto publicado: '
-    podman port "$instance" 5432/tcp
+    printf 'Base: catdb\nUsuario: catdb_dev\nEsquema: catdb\nDirección publicada: '
+    podman container inspect --format '{{range index .HostConfig.PortBindings "5432/tcp"}}{{.HostIp}}:{{.HostPort}}{{end}}' "$instance"
     printf 'Credencial local: %s/%s (valor de POSTGRES_PASSWORD)\n' "$project_dir" "$config"
 }
 
-case "${1:-}" in
+case "$action" in
     start)
+        if ! command -v flock >/dev/null; then
+            echo 'Instala util-linux para disponer del comando flock.' >&2
+            exit 1
+        fi
         umask 077
         mkdir -p .catdb
         # Keep the lock in flock, outside the process tree that starts conmon.
@@ -90,44 +111,38 @@ case "${1:-}" in
         require_owner volume "$volume"
         if podman container exists "$instance"; then
             if [[ "$(podman container inspect --format '{{.State.Running}}' "$instance")" != true ]]; then
-                podman start "$instance" >/dev/null
+                if ! podman start "$instance" >/dev/null; then
+                    echo "No se pudo iniciar $instance. Comprueba si TCP $port está ocupado y vuelve a intentar." >&2
+                    exit 1
+                fi
             fi
         else
-            podman run -d --name "$instance" --label "$owner_label" \
+            if ! podman run -d --name "$instance" --label "$owner_label" \
                 -p "127.0.0.1:$port:5432" \
                 --env-file "$config" -e POSTGRES_USER=catdb_dev -e POSTGRES_DB=catdb \
                 -v "$volume:/var/lib/postgresql/data" \
-                docker.io/library/postgres:17 >/dev/null
+                docker.io/library/postgres:17 >/dev/null; then
+                echo "No se pudo crear $instance. Revisa el error del motor, libera TCP $port si está ocupado y vuelve a intentar." >&2
+                exit 1
+            fi
         fi
         wait_for_database
-        {
-            cat <<'SQL'
-SELECT pg_advisory_xact_lock(314159, 17) AS locked \gset
-SELECT NOT EXISTS (
-    SELECT FROM pg_namespace WHERE nspname = 'catdb'
-) AS needs_install \gset
-\if :needs_install
-SQL
-            cat sql/01_schema.sql sql/02_seed.sql
-            printf '%s\n' '\endif'
-        } | database_sql -q -1 -f -
+        podman exec "$instance" mkdir -p /tmp/catdb/sql
+        podman cp sql/. "${instance}:/tmp/catdb/sql/."
+        podman cp scripts/install.sql "${instance}:/tmp/catdb/install.sql"
+        database_sql -q -1 -f /tmp/catdb/install.sql
         connection_info
         ;;
     stop)
         if podman container exists "$instance"; then
             require_container
-            podman stop "$instance" >/dev/null
+            if [[ "$(podman container inspect --format '{{.State.Running}}' "$instance")" == true ]]; then
+                podman stop "$instance" >/dev/null
+            fi
         fi
         echo 'Demostración detenida. Los datos se conservan.'
         ;;
     info)
         connection_info
-        ;;
-    test)
-        exec ./scripts/verify.sh
-        ;;
-    *)
-        echo 'Uso: ./scripts/demo.sh {start|stop|info|test}' >&2
-        exit 2
         ;;
 esac

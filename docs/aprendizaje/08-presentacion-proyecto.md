@@ -6,7 +6,7 @@
 
 En DBeaver puedo abrir el diagrama y seguir el camino desde una ficha hasta los datos relacionados. Por ejemplo, Luna tiene dos responsables, tres registros de peso y 35.000 pesos chilenos de gastos. Pipa todavía carece de movimientos, y sigue apareciendo en el reporte con un gasto de cero.
 
-Implementé el modelo en PostgreSQL 17. Las restricciones verifican que las referencias existan y que pesos y consumos sean positivos. Podman reproduce el escenario. La demostración conserva sus datos al detenerse y las pruebas crean su propia instancia de base de datos.
+Implementé el modelo en PostgreSQL 17. Las restricciones verifican que las referencias existan y que pesos y consumos sean positivos. Podman en Fedora y Docker Desktop en Windows reproducen el escenario. La demostración conserva sus datos al detenerse y las pruebas crean su propia instancia de base de datos.
 
 Preparé diez consultas comentadas y ejercicios, porque quería poder justificar el modelo y demostrar que sus resultados se pueden reproducir.»
 

@@ -9,5 +9,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
+      - run: bash -n scripts/demo.sh && bash -n scripts/verify.sh && bash -n scripts/verify-sql.sh
       - run: CONTAINER_ENGINE=docker ./scripts/verify.sh
+
+  powershell-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - shell: pwsh
+        run: ./scripts/check-demo.ps1
+
+  windows-powershell:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - shell: pwsh
+        run: |
+          foreach ($file in Get-ChildItem scripts/*.ps1) {
+            $tokens = $null
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors)
+            if ($errors) { throw ($errors | Out-String) }
+          }
+          $demo = (Resolve-Path ./scripts/demo.ps1).Path
+          $env:CATDB_PORT = '70000'
+          $output = & pwsh -NoProfile -File $demo info 2>&1
+          if ($LASTEXITCODE -ne 1 -or ($output | Out-String) -notmatch 'valid TCP port') {
+            throw "Invalid port did not produce the expected error: $output"
+          }

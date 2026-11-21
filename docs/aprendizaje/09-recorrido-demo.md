@@ -1,6 +1,6 @@
 # 09 · Recorrido de 12 minutos
 
-Antes de presentar, arranca CatDB, prueba la conexión y abre [04_demo.sql](../../sql/04_demo.sql) en DBeaver. Confirma que el controlador JDBC ya se descargó. Ten a mano el [diagrama](../modelo.md) y la [guía de resultados](04-sql-explicado.md).
+Antes de presentar, sigue la [guía de DBeaver](05-guia-visual.md) para arrancar CatDB y probar la conexión y abre [04_demo.sql](../../sql/04_demo.sql) en DBeaver. Confirma que el controlador JDBC ya se descargó. Ten a mano el [diagrama](../modelo.md) y la [guía de resultados](04-sql-explicado.md).
 
 | Tiempo | Qué haces | Qué explicas |
 | --- | --- | --- |
@@ -13,4 +13,4 @@ Antes de presentar, arranca CatDB, prueba la conexión y abre [04_demo.sql](../.
 | 10:00–11:00 | Muestra el `CHECK` de peso y su caso en `tests/integrity.sql` | La restricción la aplica PostgreSQL. La suite espera `23514` |
 | 11:00–12:00 | Muestra el resultado de la suite y explica el volumen | Reproducibilidad, qué persiste y límites del proyecto |
 
-Para practicar sin público, cambia `LUNA` por `MILO` en la consulta 04 sin guardar el cambio y predice la salida antes de ejecutarla. Después usa el ejercicio 6 para practicar un rechazo en una transacción que se revierte. Al cerrar la sesión, `./scripts/demo.sh stop` conserva los datos.
+Para practicar sin público, cambia `LUNA` por `MILO` en la consulta 04 sin guardar el cambio y predice la salida antes de ejecutarla. Después usa el ejercicio 6 para practicar un rechazo en una transacción que se revierte. Al cerrar la sesión, detén la instancia con `.\scripts\demo.ps1 stop` en Windows o `./scripts/demo.sh stop` en Fedora para conservar los datos.
